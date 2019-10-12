@@ -1,25 +1,27 @@
-import React, {useState, useEffect} from 'react'
-import { Container, Row, Col, Alert, Spinner } from 'reactstrap'
-import {api_url, default_search} from '../env.json'
+import React, {useEffect, useReducer} from 'react'
+import { Container, Row, Col, Spinner } from 'reactstrap'
+import {api_url} from '../env.json'
 import InfiniteScroll from 'react-infinite-scroll-component'
 import SearchBar from './SearchBar'
 import MovieCard from './MovieCard'
-
-const default_url = `${api_url}&s=${default_search}&page=`
+import {initialState, movieSearchReducer, defaultUrl} from '../reducers/MovieSearchReducer'
 
 export default function Content() {
-	let [url, setUrl] = useState(default_url)
-	let [loading, setLoading] = useState(true)
-	let [hasMore, setHasMore] = useState(true)
-	let [movies, setMovies] = useState([])
-	let [page, setPage] = useState(1)
-	let [errorMsg, setErrorMsg] = useState(null)
+	const [state, dispatch] = useReducer(movieSearchReducer, initialState)
+	// let [page, setPage] = useState(1)
+	// let [url, setUrl] = useState(defaultUrl)
+	// let [loading, setLoading] = useState(true)
+	// let [hasMore, setHasMore] = useState(true)
+	// let [movies, setMovies] = useState([])
+	// let [errorMsg, setErrorMsg] = useState(null)
 
 	useEffect(() => {
 		fetchData()
 	}, [])
 
 	let fetchData = async (refresh = false) => {
+		let {url, page, movies} = state
+
 		if(refresh) {
 			page = 1
 			movies = []
@@ -29,36 +31,63 @@ export default function Content() {
 		await fetch(url).then(res => res.json())
 			.then(json => {
 				if(json.Response === 'True') {
-					setPage(page + 1)
-					setHasMore(true)
-					setMovies([...movies, ...json.Search])
-					setErrorMsg(null)
-					setLoading(false)
+					dispatch({
+						type: 'SEARCH_MOVIES_SUCCESS',
+						payload: {
+							movies: [...movies, ...json.Search],
+							page: page + 1,
+						}
+					})
+					// setPage(page + 1)
+					// setHasMore(true)
+					// setMovies([...movies, ...json.Search])
+					// setErrorMsg(null)
+					// setLoading(false)
 				} else {
-					setErrorMsg(json.Error)
-					setHasMore(false)
-					setLoading(false)
+					dispatch({
+						type: 'SEARCH_MOVIES_FAIL',
+						payload: {
+							errorMsg: json.Error
+						}
+					})
+					// setErrorMsg(json.Error)
+					// setHasMore(false)
+					// setLoading(false)
 				}
 			})
 	}
 
 	let refreshData = async () => {
-		setPage(1)
-		setMovies([])
-		setHasMore(true)
-		setLoading(true)
+		// setPage(1)
+		// setMovies([])
+		// setHasMore(true)
+		// setLoading(true)
+		dispatch({
+			type: 'SEARCH_MOVIES_REFRESH'
+		})
 		await fetchData(true)
 	}
 
 	let handleSearch = async (input) => {
+		let url = ''
+
 		if(input.length < 1) {
-			setUrl(default_url)
+			// setUrl(defaultUrl)
+			url = defaultUrl
 		} else {
-			setUrl(`${api_url}&s=${input}&page=`)
+			// setUrl(`${api_url}&s=${input}&page=`)
+			url = `${api_url}&s=${input}&page=`
 		}
+
+		dispatch({
+			type: 'SEARCH_URL_UPDATE',
+			payload: {url}
+		})
 	}
 
 	let renderMovies = () => {
+		let {movies, hasMore} = state
+
 		return (
 			<Container>
 				<InfiniteScroll
@@ -73,14 +102,15 @@ export default function Content() {
 						</div>
 					}
 					// below props only if you need pull down functionality
-					refreshFunction={refreshData}
-					pullDownToRefresh
-					pullDownToRefreshContent={
-						<h3 style={{textAlign: 'center'}}>&#8595; Pull down to refresh</h3>
-					}
-					releaseToRefreshContent={
-						<h3 style={{textAlign: 'center'}}>&#8593; Release to refresh</h3>
-					}
+					// refreshFunction={refreshData}
+										
+					// pullDownToRefresh
+					// pullDownToRefreshContent={
+					//	<div className="col-sm-12 text-center text-white">&#8595; Pull down to refresh</div>
+					// }
+					// releaseToRefreshContent={
+						// <div className="col-sm-12 text-center text-white">&#8593; Release to refresh</div>
+					// }
 				>
 					{
 						movies.map((each_movie, index) => {
