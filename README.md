@@ -1,3 +1,10 @@
+### Learning React Hook (useState, useEffect, useReducer)
+
+#### Demo Project Website
+https://hooked-movies.netlify.com/
+
+<b>Movie Api Data from OMDB Movie Api</b>
+
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
 
 ## Available Scripts
